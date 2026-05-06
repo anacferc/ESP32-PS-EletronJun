@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS EletronJun - ESP32</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            margin: 10px;
+            min-width: 200px;
+        }
+
+        .temp {
+            color: #e67e22;
+            font-size: 2em;
+        }
+
+        .humi {
+            color: #3498db;
+            font-size: 2em;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .btn-off {
+            background-color: #7f8c8d;
+        }
+
+        .btn-auto {
+            background-color: #27ae60;
+        }
+
+        .btn-on {
+            background-color: #2980b9;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        #status {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Controle ESP32 - EletronJun</h1>
+
+    <div class="card">
+        <h3>Temperatura</h3>
+        <p class="temp"><span id="t">--</span>°C</p>
+    </div>
+
+    <div class="card">
+        <h3>Umidade</h3>
+        <p class="humi"><span id="h">--</span>%</p>
+    </div>
+
+    <br>
+
+    <div class="card">
+        <h3>Modos de Operação</h3>
+        <button class="btn btn-off" onclick="mudarModo(0)">DESLIGADO</button>
+        <button class="btn btn-auto" onclick="mudarModo(1)">AUTOMÁTICO</button>
+        <button class="btn btn-on" onclick="mudarModo(2)">LIGADO</button>
+        <p>Modo Atual: <span id="status">DESCONHECIDO</span></p>
+    </div>
+
+    <script>
+        // Função que será chamada quando você clicar nos botões
+        function mudarModo(valor) {
+            console.log("Mudando para o modo: " + valor);
+            // No ESP32, usaremos o comando 'fetch' para enviar o dado
+            fetch('/update?state=' + valor)
+                .then(response => console.log("Enviado com sucesso!"));
+
+            // Atualiza o texto na tela (apenas para simular agora)
+            const statusTxt = ["DESLIGADO", "AUTOMÁTICO", "LIGADO"];
+            document.getElementById('status').innerText = statusTxt[valor];
+        }
+
+        // Simulação de atualização de dados a cada 2 segundos
+        setInterval(function () {
+            // Só busca dados se o modo não for "DESLIGADO"
+            if (document.getElementById('status').innerText !== "DESLIGADO") {
+                fetch('/read')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('t').innerText = data.temp;
+                        document.getElementById('h').innerText = data.humi;
+                    });
+            }
+        }, 2000); // Atualiza a cada 2 segundos
+    </script>
+</body>
+
+</html>
