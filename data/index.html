@@ -4,118 +4,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS EletronJun - ESP32</title>
+    <title>Monitoramento - EletronJun</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
         }
 
-        .card {
+        /* Caixa de Título Superior */
+        .header-box {
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-            margin: 10px;
-            min-width: 200px;
+            border: 2px solid #333;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            padding: 15px 30px;
+            text-align: left;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
-        .temp {
-            color: #e67e22;
-            font-size: 2em;
+        .header-box h2 { margin: 0; font-size: 1.4em; }
+        .header-box p { margin: 5px 0 0 0; font-size: 0.9em; color: #666; }
+        .update-time { float: right; font-weight: bold; color: #333; }
+
+        /* Container de Modos */
+        .mode-container {
+            margin-bottom: 25px;
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
-        .humi {
-            color: #3498db;
-            font-size: 2em;
-        }
-
-        .btn {
-            padding: 15px 25px;
-            font-size: 16px;
-            margin: 5px;
+        .mode-option {
             cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            transition: 0.3s;
-        }
-
-        .btn-off {
-            background-color: #7f8c8d;
-        }
-
-        .btn-auto {
-            background-color: #27ae60;
-        }
-
-        .btn-on {
-            background-color: #2980b9;
-        }
-
-        .btn:hover {
-            opacity: 0.8;
-        }
-
-        #status {
+            display: inline-flex;
+            align-items: center;
             font-weight: bold;
-            margin-top: 20px;
         }
+
+        .mode-option input { margin-right: 8px; transform: scale(1.2); }
+
+        /* Grid de Sensores */
+        .sensor-grid {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            max-width: 850px;
+            flex-wrap: wrap;
+        }
+
+        .sensor-card {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 30px;
+            padding: 30px;
+            min-width: 250px;
+            text-align: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .sensor-card h3 { margin-top: 0; font-size: 1.3em; color: #444; }
+
+        /* Cores Originais Mantidas */
+        .temp-val { color: #e67e22; font-size: 3.5em; font-weight: bold; }
+        .humi-val { color: #3498db; font-size: 3.5em; font-weight: bold; }
+
     </style>
 </head>
 
 <body>
 
-    <h1>Controle ESP32 - EletronJun</h1>
-
-    <div class="card">
-        <h3>Temperatura</h3>
-        <p class="temp"><span id="t">--</span>°C</p>
+    <div class="header-box">
+        <h2>Sistema de monitoramento de Temperatura e Umidade do ar</h2>
+        <p>FCTE - EletronJun <span class="update-time">última atualização: <span id="time">--:--:--</span></span></p>
     </div>
 
-    <div class="card">
-        <h3>Umidade</h3>
-        <p class="humi"><span id="h">--</span>%</p>
+    <div class="mode-container">
+        <span style="font-weight: bold; color: #555;">Modo:</span>
+        <label class="mode-option" style="color: #27ae60;">
+            <input type="radio" name="modo" value="1" onclick="mudarModo(1)"> Automático
+        </label>
+        <label class="mode-option" style="color: #2980b9;">
+            <input type="radio" name="modo" value="2" onclick="mudarModo(2)"> Ligado
+        </label>
+        <label class="mode-option" style="color: #7f8c8d;">
+            <input type="radio" name="modo" value="0" onclick="mudarModo(0)" checked> Desligado
+        </label>
     </div>
 
-    <br>
+    <div class="sensor-grid">
+        <div class="sensor-card">
+            <h3>Temperatura</h3>
+            <div class="temp-val"><span id="t">--</span> °C</div>
+        </div>
 
-    <div class="card">
-        <h3>Modos de Operação</h3>
-        <button class="btn btn-off" onclick="mudarModo(0)">DESLIGADO</button>
-        <button class="btn btn-auto" onclick="mudarModo(1)">AUTOMÁTICO</button>
-        <button class="btn btn-on" onclick="mudarModo(2)">LIGADO</button>
-        <p>Modo Atual: <span id="status">DESCONHECIDO</span></p>
+        <div class="sensor-card">
+            <h3>Umidade relativa</h3>
+            <div class="humi-val"><span id="h">--</span> %</div>
+        </div>
     </div>
 
     <script>
-        // Função que será chamada quando você clicar nos botões
         function mudarModo(valor) {
-            console.log("Mudando para o modo: " + valor);
-            // No ESP32, usaremos o comando 'fetch' para enviar o dado
+            console.log("Modo enviado ao ESP32: " + valor);
             fetch('/update?state=' + valor)
-                .then(response => console.log("Enviado com sucesso!"));
-
-            // Atualiza o texto na tela (apenas para simular agora)
-            const statusTxt = ["DESLIGADO", "AUTOMÁTICO", "LIGADO"];
-            document.getElementById('status').innerText = statusTxt[valor];
+                .then(response => console.log("Comando enviado!"));
+            
+            if(valor == 0) {
+                document.getElementById('t').innerText = "--";
+                document.getElementById('h').innerText = "--";
+            }
         }
 
-        // Simulação de atualização de dados a cada 2 segundos
+        function atualizarRelogio() {
+            const agora = new Date();
+            document.getElementById('time').innerText = agora.toLocaleTimeString();
+        }
+
         setInterval(function () {
-            // Só busca dados se o modo não for "DESLIGADO"
-            if (document.getElementById('status').innerText !== "DESLIGADO") {
+            const modoDesligado = document.querySelector('input[value="0"]').checked;
+            
+            if (!modoDesligado) {
+                atualizarRelogio();
                 fetch('/read')
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('t').innerText = data.temp;
                         document.getElementById('h').innerText = data.humi;
-                    });
+                    })
+                    .catch(err => console.log("Aguardando ESP32..."));
             }
-        }, 2000); // Atualiza a cada 2 segundos
+        }, 2000);
     </script>
 </body>
 
